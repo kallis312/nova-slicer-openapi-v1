@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: Nova Slicer Server 1.0
+  description: |-
+    This is Nova Slicer Server.
+    
+    Reference Link:
+    - [The nova slicer server repository](https://github.com/callisto-ai)
+    - [The source API definition for the Nova slicer server](https://github.com/callisto-ai)
+  contact:
+    email: kyosuke@callisto-ai.com
+  # license:
+  #   name: Apache 2.0
+  #   url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: https://nova-production-server/api/v1
+    description: "Production-Server"
+  - url: https://nova-staging-server/api/v1
+    description: "Staging-Server"
+tags:
+  - name: Auth
+    description: User Authentication
+  - name: Dicom
+    description: DICOM Management
+  - name: Annotation
+    description: Annotation (automatic, AI integration)
+  - name: Project
+    description: Project Management
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Logs user into the system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid username/password supplied
+          content:
+            application/json:
+              example: 
+                message: not found user
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+  /auth/logout:
+    get:
+      tags:
+        - Auth
+      summary: Logs out current logged in user session
+      description: ''
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              example: 
+                message: Logout successfully
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: successful operation
+          content:
+            application/json:
+              example: 
+                message: Logout failure
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security: 
+        - JWTAuth: []
+  /dicom/list/{page}:
+    get:
+      tags:
+        - Dicom
+      summary: Get dicom list by page number
+      description: Returns dicom list
+      parameters:
+        - name: page
+          in: path
+          description: Number of page
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+  /dicom/get/{id}:
+    get:
+      tags:
+        - Dicom
+      summary: Get a specific DICOM by ID
+      description: Download DICOM file
+      parameters:
+        - name: id
+          in: path
+          description: Dicom Id
+          required: true    
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+  /dicom/annotation/{id}:
+    get:
+      tags:
+        - Dicom
+      summary: Get the annotation of a specific DICOM ID (all slices included)
+      description: Download DICOM file
+      parameters:
+        - name: id
+          in: path
+          description: Dicom Id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+    post:
+      tags:
+        - Dicom
+      summary: Update/create/save the annotation of a specific DICOM ID
+      description: Download DICOM file
+      parameters:
+        - name: id
+          in: path
+          description: Dicom Id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+  /annotation/MedSAM:
+    post:
+      tags:
+        - Annotation
+      summary: Send coordinates and get segmentation results using MedSAM
+      description: Download DICOM file
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+  /annotation/Monai:
+    post:
+      tags:
+        - Annotation
+      summary: Send coordinates and get segmentation results using MedSAM
+      description: This is used by jupiter to request for completely automatic annotation for a particular DICOM
+      responses:
+        200:
+          description: Successfully
+          content:
+            application/json:
+              example: 
+                message: Get Data
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+      security: 
+        - JWTAuth: []
+components:
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        text/plain:
+          example: Unauthorized
+  schemas:
+    LoginResponse:
+      type: object
+      example: 
+        token: exsss
+      properties:
+        token:
+          type: string
+    LoginRequest:
+      type: object
+      example: 
+        username: callisto
+        psssword: callisto
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+  securitySchemes:
+    JWTAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
